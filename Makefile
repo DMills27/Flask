@@ -1,43 +1,55 @@
-.PHONY: clean-pyc ext-test test tox-test test-with-mem upload-docs docs audit
+# A simple way to update Flask Heroku's static files.
 
-all: clean-pyc test
+# ----------------------
+#  Useful variables
+# ----------------------
+NORM=\033[0m
+BOLD=\033[1m
+CHECK=\033[32m✔\033[39m
+port=5000
 
-test:
-	py.test tests examples
 
-tox-test:
-	tox
+# ----------------------
+#  Default build
+# ----------------------
+build:
+	@echo "\n⚡  ${BOLD}This might take a minute${NORM}  ⚡\n"
+	@make clone
+	@make update
+	@make js
+	@rm -rf {bootstrap,update}
+	@echo "\n⚡  ${BOLD}Successfully updated${NORM}  ⚡\n"
 
-audit:
-	python setup.py audit
 
-release:
-	python scripts/make-release.py
+# ----------------------
+#  Clone Bootstrap && Make
+# ----------------------
+clone:
+	@git clone git://github.com/twitter/bootstrap.git
+	@echo "\n${BOLD}Clone Twitter Bootstrap...  ${NORM}${CHECK}\n"
+	@cd bootstrap; make bootstrap
+	@cd bootstrap; cp -R less bootstrap/css/less
+	@cd bootstrap; mv bootstrap ../update
 
-ext-test:
-	python tests/flaskext_test.py --browse
 
-clean-pyc:
-	find . -name '*.pyc' -exec rm -f {} +
-	find . -name '*.pyo' -exec rm -f {} +
-	find . -name '*~' -exec rm -f {} +
+# ----------------------
+#  External JavaScript
+# ----------------------
+js:
+	@curl http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js > static/js/jquery.js
+	@echo "\n${BOLD}Grab latest jQuery...  ${NORM}${CHECK}\n"
+	@curl -L http://git.io/less-1.3.0 > static/js/less.js
+	@echo "\n${BOLD}Grab latest LESS.js...  ${NORM}${CHECK}\n"
+	@curl http://modernizr.com/downloads/modernizr-2.5.3.js > static/js/modernizr.js
+	@echo "\n${BOLD}Grab latest Modernizr...  ${NORM}${CHECK}\n"
 
-upload-docs:
-	$(MAKE) -C docs html dirhtml latex epub
-	$(MAKE) -C docs/_build/latex all-pdf
-	cd docs/_build/; mv html flask-docs; zip -r flask-docs.zip flask-docs; mv flask-docs html
-	rsync -a docs/_build/dirhtml/ flow.srv.pocoo.org:/srv/websites/flask.pocoo.org/docs/
-	rsync -a docs/_build/latex/Flask.pdf flow.srv.pocoo.org:/srv/websites/flask.pocoo.org/docs/flask-docs.pdf
-	rsync -a docs/_build/flask-docs.zip flow.srv.pocoo.org:/srv/websites/flask.pocoo.org/docs/flask-docs.zip
-	rsync -a docs/_build/epub/Flask.epub flow.srv.pocoo.org:/srv/websites/flask.pocoo.org/docs/flask-docs.epub
 
-# ebook-convert docs: http://manual.calibre-ebook.com/cli/ebook-convert.html
-ebook:
-	@echo 'Using .epub from `make upload-docs` to create .mobi.'
-	@echo 'Command `ebook-covert` is provided by calibre package.'
-	@echo 'Requires X-forwarding for Qt features used in conversion (ssh -X).'
-	@echo 'Do not mind "Invalid value for ..." CSS errors if .mobi renders.'
-	ssh -X pocoo.org ebook-convert /var/www/flask.pocoo.org/docs/flask-docs.epub /var/www/flask.pocoo.org/docs/flask-docs.mobi --cover http://flask.pocoo.org/docs/_images/logo-full.png --authors 'Armin Ronacher'
-
-docs:
-	$(MAKE) -C docs html
+# ----------------------
+#  Update commands
+# ----------------------
+update:
+	@rm -rf static/css/less
+	@mv update/css/* static/css
+	@mv update/img/* static/img
+	@mv update/js/* static/js
+	@echo "\n${BOLD}Update static files...  ${NORM}${CHECK}\n"
