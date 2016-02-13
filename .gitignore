@@ -1,13 +1,42 @@
-.DS_Store
-*.pyc
-*.pyo
+# Virtualenv
+venv 
 env
 env*
-dist
-build
+
+.Python
+include
+lib
+
+# Pythong packages
 *.egg
 *.egg-info
-_mailinglist
+bin
+build
+dist
+sdist
+eggs
+env
+parts
+var
+develop-eggs
+.installed.cfg
+
+# Pip Install Log
+pip-log.txt
+
+# Unit test / coverage
+.coverage
 .tox
+
+# Mac OS X
+.DS_Store
+
+# Generate files
+*.[oa]
+*.py[co]
+.rbc
+
+# Misc
+_mailinglist
 .cache/
 .idea/
